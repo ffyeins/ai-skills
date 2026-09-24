@@ -53,3 +53,6 @@ Session.vim
 .env
 .env.local
 .env.*.local
+
+# doc-lookup DevDocs data: large, re-download with tools/download-devdocs.sh
+skills/doc-lookup/devdocs/
