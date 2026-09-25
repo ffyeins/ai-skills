@@ -1,17 +1,3 @@
-# Machine-local shell overrides and secrets
-.zshenv.local
-
-# Neovim
-.config/nvim/lazy-lock.json
-
-# Sensitive docs
-docs/sensitive/
-
-# Obsidian
-.obsidian/appearance.json
-
-# Delete lines above. They are for dotfiles/.
-
 # macOS
 .DS_Store
 .DS_Store?
