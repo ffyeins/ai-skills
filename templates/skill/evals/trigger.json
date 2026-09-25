@@ -1,0 +1,7 @@
+[
+  {"query": "TEMPLATE: a substantive request that should load this skill", "should_trigger": true},
+  {"query": "TEMPLATE: the same need, phrased the way a different user would", "should_trigger": true},
+  {"query": "TEMPLATE: a request that names the tool or file type without saying the skill's topic", "should_trigger": true},
+  {"query": "TEMPLATE: a near-miss that shares keywords but belongs elsewhere", "should_trigger": false},
+  {"query": "TEMPLATE: another near-miss", "should_trigger": false}
+]

@@ -2,6 +2,8 @@
 
 > Lazy.nvim plugin manager, Telescope, Treesitter, gitsigns, mini.nvim, and how to add new plugins.
 
+Verified against: Neovim 0.12.3 and a kickstart.nvim-based config (2026-09)
+
 **Contents**
 
 - Lazy.nvim -- Plugin Manager
@@ -211,44 +213,37 @@ pcall(require('telescope').load_extension, 'ui-select')  -- vim.ui.select
 
 ### Configuration in Kickstart
 
-Kickstart.nvim uses a `FileType` autocommand to start treesitter for supported filetypes:
-
-```lua
-vim.api.nvim_create_autocmd('FileType', {
-  pattern = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc',
-              'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' },
-  callback = function()
-    vim.treesitter.start()
-  end,
-})
-```
-
-### Adding Language Support
-
-Install a parser using `:TSInstall`:
-
-```vim
-:TSInstall python          " Install Python parser
-:TSInstall javascript      " Install JavaScript parser
-:TSInstall typescript
-:TSInstall rust
-:TSInstall go
-```
-
-Then add the filetype to the autocommand pattern, or configure `nvim-treesitter` with `ensure_installed`:
+Kickstart.nvim uses nvim-treesitter's `main` branch. It installs parsers for a
+list of languages, then starts treesitter from a `FileType` autocommand:
 
 ```lua
 {
   'nvim-treesitter/nvim-treesitter',
+  branch = 'main',
   build = ':TSUpdate',
-  opts = {
-    ensure_installed = {
-      'bash', 'c', 'lua', 'python', 'javascript',
-      'typescript', 'rust', 'go', 'html', 'css',
-    },
-    auto_install = true,
-  },
+  config = function()
+    local filetypes = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc',
+                        'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' }
+    require('nvim-treesitter').install(filetypes)
+    vim.api.nvim_create_autocmd('FileType', {
+      pattern = filetypes,
+      callback = function() vim.treesitter.start() end,
+    })
+  end,
 }
+```
+
+The `main` branch has no `ensure_installed`, `auto_install`, or `highlight`
+options. Those belong to the old `master` branch and its
+`require('nvim-treesitter.configs').setup()`.
+
+### Adding Language Support
+
+Add the language to `filetypes` so it's installed and started on every
+machine. To try a parser once:
+
+```vim
+:TSInstall python
 ```
 
 ### Treesitter Commands
@@ -256,10 +251,11 @@ Then add the filetype to the autocommand pattern, or configure `nvim-treesitter`
 | Command | Description |
 |---------|-------------|
 | `:TSInstall {lang}` | Install a parser |
-| `:TSUpdate` | Update all installed parsers |
-| `:TSInstallInfo` | List installed/available parsers |
-| `:InspectTree` | Show syntax tree for current buffer |
-| `:TSHighlightCapturesUnderCursor` | Show highlight groups at cursor |
+| `:TSUpdate [{lang}]` | Update installed parsers |
+| `:TSUninstall {lang}` | Remove a parser |
+| `:TSLog` | Show messages from installs and updates |
+| `:InspectTree` | Show syntax tree for current buffer (built in) |
+| `:Inspect` | Show highlight groups at cursor (built in) |
 
 ### Treesitter Text Objects (with nvim-treesitter-textobjects)
 
@@ -279,15 +275,19 @@ If you add `nvim-treesitter/nvim-treesitter-textobjects`:
 
 ### Signs
 
+Kickstart's settings (gitsigns' own defaults use `┃` for added and changed lines):
+
 | Symbol | Meaning |
 |--------|---------|
 | `+` | Added lines |
 | `~` | Changed lines |
 | `_` | Deleted line (below) |
 | `‾` | Deleted line (above) |
-| `┃` | Changed-deleted |
+| `~` | Changed, then deleted |
 
-### Hunk Operations (kickstart.nvim `<leader>h` prefix)
+### Hunk Operations (`<leader>h` prefix)
+
+These come from kickstart's optional `kickstart.plugins.gitsigns` module; enable it with `require 'kickstart.plugins.gitsigns'` in the plugin list.
 
 ```lua
 -- In the gitsigns on_attach callback:
@@ -297,14 +297,16 @@ map('v', '<leader>hs', function() gitsigns.stage_hunk({ vim.fn.line('.'), vim.fn
 map('v', '<leader>hr', function() gitsigns.reset_hunk({ vim.fn.line('.'), vim.fn.line('v') }) end)
 map('n', '<leader>hS', gitsigns.stage_buffer, 'Stage buffer')
 map('n', '<leader>hR', gitsigns.reset_buffer, 'Reset buffer')
-map('n', '<leader>hu', gitsigns.undo_stage_hunk, 'Undo stage hunk')
+map('n', '<leader>hu', gitsigns.stage_hunk, 'Undo stage hunk')  -- on a staged hunk, stage_hunk unstages it
 map('n', '<leader>hp', gitsigns.preview_hunk, 'Preview hunk')
-map('n', '<leader>hb', function() gitsigns.blame_line({ full = true }) end, 'Blame line')
+map('n', '<leader>hb', gitsigns.blame_line, 'Blame line')
 map('n', '<leader>hd', gitsigns.diffthis, 'Diff against index')
-map('n', '<leader>hD', function() gitsigns.diffthis('~') end, 'Diff against last commit')
+map('n', '<leader>hD', function() gitsigns.diffthis('@') end, 'Diff against last commit')
 map('n', '<leader>tb', gitsigns.toggle_current_line_blame, 'Toggle blame')
-map('n', '<leader>td', gitsigns.toggle_deleted, 'Toggle deleted')
+map('n', '<leader>tD', gitsigns.preview_hunk_inline, 'Show deleted lines inline')
 ```
+
+`undo_stage_hunk()` and `toggle_deleted()` are deprecated; use `stage_hunk()` and `preview_hunk_inline()` instead.
 
 ### Navigation
 
@@ -359,7 +361,12 @@ Highlights and searches TODO/FIXME/HACK/NOTE comments:
 { 'folke/todo-comments.nvim', event = 'VimEnter', dependencies = { 'nvim-lua/plenary.nvim' }, opts = { signs = false } }
 ```
 
-Search todos with: `:TodoTelescope`, or use `]t` / `[t` to jump between them.
+Search todos with `:TodoTelescope`. Jumping between them needs your own mappings; kickstart doesn't add any:
+
+```lua
+vim.keymap.set('n', ']t', function() require('todo-comments').jump_next() end, { desc = 'Next todo comment' })
+vim.keymap.set('n', '[t', function() require('todo-comments').jump_prev() end, { desc = 'Previous todo comment' })
+```
 
 ## Guess-indent.nvim
 

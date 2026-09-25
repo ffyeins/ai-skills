@@ -2,6 +2,8 @@
 
 > Language server setup with Mason and lspconfig, diagnostics, blink.cmp completion, and Conform formatting.
 
+Verified against: Neovim 0.12.3 and a kickstart.nvim-based config (2026-09)
+
 **Contents**
 
 - Architecture
@@ -18,14 +20,15 @@
 Neovim has a built-in LSP client (`vim.lsp`). The typical kickstart.nvim stack:
 
 ```
-Mason (installer) → mason-lspconfig (bridge) → nvim-lspconfig (configuration)
-       ↓                                              ↓
-  Installs binaries                          Starts & configures servers
+mason-tool-installer → Mason          nvim-lspconfig → vim.lsp.config() → vim.lsp.enable()
+        ↓                                   ↓                                   ↓
+ Installs binaries                  Default server configs        Starts servers for matching files
 ```
 
 - **Mason** -- installs language servers, formatters, linters into `~/.local/share/nvim/mason/`
-- **mason-lspconfig.nvim** -- bridges Mason and lspconfig so installed servers auto-configure
-- **nvim-lspconfig** -- provides default configurations for language servers
+- **mason-tool-installer.nvim** -- installs everything listed in `ensure_installed` on startup
+- **nvim-lspconfig** -- ships default configs (command, filetypes, root markers) for each server
+- **`vim.lsp.config()` / `vim.lsp.enable()`** -- built into Neovim: merge your settings over those defaults, then start the server when a matching file opens
 - **blink.cmp** -- completion engine that integrates with LSP
 - **conform.nvim** -- formatting layer (independent of LSP)
 
@@ -48,13 +51,7 @@ local servers = {
   pyright = {},
   ts_ls = {},
   gopls = {},
-  rust_analyzer = {
-    settings = {
-      ['rust-analyzer'] = {
-        checkOnSave = { command = 'clippy' },
-      },
-    },
-  },
+  rust_analyzer = {},
   clangd = {},
   jsonls = {},
   yamlls = {},
@@ -79,18 +76,30 @@ require('mason-tool-installer').setup({ ensure_installed = ensure_installed })
 
 ### Step 3: Server Starts Automatically
 
-`mason-lspconfig` calls `lspconfig[server].setup(config)` for each server. The setup merges your settings with defaults and blink.cmp capabilities.
+Kickstart loops over `servers`, adds blink.cmp's capabilities, and hands each entry to Neovim:
+
+```lua
+local capabilities = require('blink.cmp').get_lsp_capabilities()
+
+for name, server in pairs(servers) do
+  server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
+  vim.lsp.config(name, server)  -- merge with nvim-lspconfig's defaults
+  vim.lsp.enable(name)          -- start it for matching filetypes
+end
+```
 
 ### Manual Server Setup (Without Mason)
 
-For servers not in Mason's registry:
+For a server Mason doesn't install, point `cmd` at your binary:
 
 ```lua
-require('lspconfig').serve_d.setup({
+vim.lsp.config('serve_d', {
   cmd = { '/usr/local/bin/serve-d' },
-  capabilities = require('blink.cmp').get_lsp_capabilities(),
 })
+vim.lsp.enable('serve_d')
 ```
+
+nvim-lspconfig supplies the filetypes and root markers for servers it knows. For one it doesn't, also set `filetypes` and `root_markers` (e.g. `{ '.git' }`).
 
 ## vim.lsp.buf -- LSP Actions
 
@@ -182,14 +191,23 @@ vim.diagnostic.config({
 | `vim.diagnostic.get(bufnr)` | Get diagnostics for a buffer |
 | `vim.diagnostic.enable(enable, filter)` | Enable/disable diagnostics |
 
-### Default Diagnostic Keymaps
+### Default LSP and Diagnostic Keymaps
 
-Neovim provides these mappings by default (since 0.10):
+Neovim 0.12 sets these without any config. Kickstart.nvim replaces some with Telescope pickers (see `neovim-keybindings.md`).
 
 | Mapping | Action |
 |---------|--------|
-| `[d` / `]d` | Go to previous / next diagnostic |
-| `<C-W>d` | Open diagnostic float |
+| `grn` | Rename symbol |
+| `gra` | Code action (normal and visual mode) |
+| `grr` | List references |
+| `gri` | Go to implementation |
+| `grt` | Go to type definition |
+| `grx` | Run code lens |
+| `gO` | Document symbols |
+| `<C-s>` (insert mode) | Signature help |
+| `[d` / `]d` | Previous / next diagnostic |
+| `[D` / `]D` | First / last diagnostic in the buffer |
+| `<C-w>d` | Open diagnostic float |
 
 ## Blink.cmp -- Completion
 
@@ -223,13 +241,13 @@ Kickstart.nvim uses `saghen/blink.cmp` for auto-completion.
 
 | Key | Action |
 |-----|--------|
-| `<C-space>` | Show completion / show documentation |
+| `<C-space>` | Show completion / toggle documentation |
 | `<C-y>` | Accept completion |
-| `<C-e>` | Hide completion |
-| `<C-p>` / `<C-n>` | Previous / next item |
+| `<C-e>` | Cancel completion |
+| `<C-p>` / `<C-n>` (or `<Up>` / `<Down>`) | Previous / next item |
 | `<C-b>` / `<C-f>` | Scroll docs up / down |
-| `<C-k>` / `<C-j>` | Snippet jump prev / next (in snippet) |
-| `<Tab>` / `<S-Tab>` | Snippet placeholder navigation |
+| `<Tab>` / `<S-Tab>` | Next / previous snippet placeholder |
+| `<C-k>` | Toggle signature help |
 
 ### Adding Completion Sources
 
@@ -260,7 +278,7 @@ Conform.nvim provides a formatting layer independent of LSP:
   cmd = { 'ConformInfo' },
   keys = {
     { '<leader>f', function()
-      require('conform').format({ async = true, lsp_fallback = true })
+      require('conform').format({ async = true, lsp_format = 'fallback' })
     end, desc = '[F]ormat buffer' },
   },
   opts = {
@@ -270,7 +288,7 @@ Conform.nvim provides a formatting layer independent of LSP:
       if disable_filetypes[vim.bo[bufnr].filetype] then
         return nil
       end
-      return { timeout_ms = 500, lsp_fallback = true }
+      return { timeout_ms = 500, lsp_format = 'fallback' }
     end,
     formatters_by_ft = {
       lua = { 'stylua' },
@@ -313,7 +331,7 @@ local disable_filetypes = { c = true, cpp = true, java = true }
 
 ```lua
 -- Format current buffer
-require('conform').format({ async = true, lsp_fallback = true })
+require('conform').format({ async = true, lsp_format = 'fallback' })
 
 -- Format a range (visual selection)
 require('conform').format({ async = true, range = { start, end_ } })
@@ -329,17 +347,16 @@ require('conform').format({ async = true, range = { start, end_ } })
 
 | Command | Purpose |
 |---------|---------|
-| `:LspInfo` | Show active/configured language servers |
-| `:LspLog` | Open LSP log file |
-| `:LspRestart` | Restart all attached language servers |
+| `:checkhealth vim.lsp` | Active clients, enabled configs, and the log file's location |
+| `:LspInfo` | Alias for `:checkhealth vim.lsp` (nvim-lspconfig) |
+| `:LspLog` | Open the LSP log file (nvim-lspconfig) |
+| `:lsp restart` | Restart language servers (built in; nvim-lspconfig also has `:LspRestart`) |
 | `:Mason` | Open Mason UI to manage installations |
 | `:MasonLog` | Open Mason log |
-| `:checkhealth lsp` | Run LSP health check |
-| `:checkhealth lspconfig` | Check lspconfig health |
 
 ### Common Issues
 
-- **Server not starting**: Check `:LspLog` and `:Mason` to verify installation
+- **Server not starting**: Check `:checkhealth vim.lsp`, `:LspLog`, and `:Mason` to verify installation
 - **No completions**: Verify blink.cmp is loaded (`:Lazy check blink.cmp`) and server supports completion
 - **Formatting not working**: Run `:ConformInfo` to see which formatter is active
 - **Slow diagnostics**: Increase `updatetime` or configure `vim.diagnostic.config()` to reduce visual noise

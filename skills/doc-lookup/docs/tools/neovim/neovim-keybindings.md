@@ -2,6 +2,8 @@
 
 > Keymap API, leader key, default Vim motions, kickstart.nvim mappings, and which-key integration.
 
+Verified against: Neovim 0.12.3 and a kickstart.nvim-based config (2026-09)
+
 **Contents**
 
 - vim.keymap.set
@@ -46,11 +48,10 @@ vim.keymap.set(mode, lhs, rhs, opts)
 | Option | Default | Description |
 |--------|---------|-------------|
 | `desc` | | Description (shown in which-key and `:map`) |
-| `noremap` | `true` | Non-recursive mapping |
 | `silent` | `false` | Don't echo the command |
 | `buffer` | | Buffer handle; `0` or `true` for current buffer |
 | `expr` | `false` | `rhs` is an expression that returns the keys |
-| `remap` | `false` | Set to `true` for recursive mapping |
+| `remap` | `false` | Set to `true` for a recursive mapping (`noremap` isn't supported here) |
 | `nowait` | `false` | Don't wait for longer key sequences |
 
 ### Examples
@@ -220,6 +221,8 @@ Usage: `"ayw` (yank word into register `a`), `"ap` (paste from register `a`).
 | `<leader><leader>` | Find existing buffers |
 
 ### LSP (active when a language server attaches)
+
+Neovim itself already maps `grn`, `gra`, `grr`, `gri`, `grt`, and `gO` (see `neovim-lsp.md`). Kickstart points the lookups at Telescope pickers and adds `grd`, `grD`, and `gW`.
 
 | Mapping | Mode | Action |
 |---------|------|--------|

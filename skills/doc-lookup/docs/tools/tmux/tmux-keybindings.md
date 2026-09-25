@@ -2,6 +2,8 @@
 
 > Default key bindings, key tables, and mouse support for tmux.
 
+Verified against: tmux 3.7b (2026-09)
+
 **Contents**
 
 - Key Concepts

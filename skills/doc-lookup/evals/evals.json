@@ -1,0 +1,29 @@
+{
+  "skill_name": "doc-lookup",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "my deploy script takes -v and -o <file>. how do i parse that with getopts in bash, and what ends up in OPTARG if someone passes -o with no file?",
+      "expected_output": "Answers from the local Bash reference, found with scripts/devdocs.py search/show, without a web search. Shows a while getopts loop with optstring 'vo:' and a case statement. Explains that normally a missing argument sets name to '?' and unsets OPTARG, while with a leading ':' in optstring (silent mode) name becomes ':' and OPTARG holds the option character.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "in my tmux.conf i want a key that runs a slow git fetch without freezing tmux while it runs. run-shell with -b or without?",
+      "expected_output": "Uses docs/tools/tmux/tmux-scripting.md (checked against the tmux man page): -b runs the command in the background so tmux doesn't wait; the output still shows in view mode when it finishes. Gives a bind-key example with run-shell -b. No web search.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "java 8: exact signature of ArrayList.add when you give it an index, and what does it throw if the index is bad?",
+      "expected_output": "Uses scripts/devdocs.py to find java/util/arraylist and show the add entries: public void add(int index, E element), throwing IndexOutOfBoundsException if index < 0 || index > size(). The quoted text contains no HTML entities such as &lt;.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "neovim, kickstart-based config: how do i add gopls so it gets installed and starts automatically for go files?",
+      "expected_output": "Uses docs/tools/neovim/neovim-lsp.md: add gopls to the servers table, let Mason (mason-tool-installer) install it, and the config's vim.lsp.config/vim.lsp.enable loop starts it. Suggests :checkhealth vim.lsp to confirm.",
+      "files": []
+    }
+  ]
+}

@@ -2,6 +2,8 @@
 
 > Commands, options, formats, styles, hooks, and configuration for tmux automation and customization.
 
+Verified against: tmux 3.7b (2026-09)
+
 **Contents**
 
 - Key Concepts
@@ -111,7 +113,7 @@ set -g status-style bg=blue
 | Option | Values | Description |
 |--------|--------|-------------|
 | `default-terminal` | terminal string | Default terminal (e.g. `tmux-256color`) |
-| `escape-time` | milliseconds | Wait time after Escape key (default: 500) |
+| `escape-time` | milliseconds | Wait time after Escape key (default: 10 since tmux 3.5; 500 before) |
 | `focus-events` | on / off | Pass focus events to apps |
 | `history-file` | path | Command prompt history file |
 | `set-clipboard` | on / external / off | Terminal clipboard integration |
@@ -202,13 +204,18 @@ Format variables are used with `-F` flag, enclosed in `#{` and `}`.
 # Ternary conditional
 #{?session_attached,attached,not attached}
 
-# Comparisons (return 1 or 0)
+# String comparisons (return 1 or 0)
 #{==:#{host},myhost}       # equal
 #{!=:#{host},myhost}       # not equal
-#{<:#{window_index},5}     # less than
-#{>:#{window_index},5}     # greater than
+#{<:#{host},m}             # sorts before (as text, so "10" < "5")
+#{>:#{host},m}             # sorts after
 #{||:#{a},#{b}}            # OR
 #{&&:#{a},#{b}}            # AND
+
+# Numeric comparisons and arithmetic: prefix the operator with e|
+#{e|<:#{window_index},5}   # window index less than 5
+#{e|>=:#{window_panes},2}  # at least two panes
+#{e|+:#{window_index},1}   # window index plus one
 ```
 
 ### Modifiers
@@ -362,12 +369,15 @@ tmux capture-pane -S -1000 -p > output.txt
 ### run-shell
 
 ```bash
-# Run command in background
-tmux run-shell 'sleep 5 && echo done'
+# Run and wait: tmux blocks until the command finishes
+tmux run-shell 'ls -la'
 
-# Run with output shown
-tmux run-shell -b 'ls -la'
+# Run in the background: tmux carries on while it runs
+tmux run-shell -b 'sleep 5 && echo done'
 ```
+
+Either way, anything the command prints shows in view mode when it finishes
+(unless `-C` runs a tmux command instead of a shell command).
 
 ### Conditional Execution
 
@@ -376,7 +386,7 @@ tmux run-shell -b 'ls -la'
 tmux if-shell '[ -d ~/project ]' 'display-message "Project exists"'
 
 # Format-based condition
-tmux if-shell -F '#{==:#{session_name},work}' 'set status-bg red'
+tmux if-shell -F '#{==:#{session_name},work}' 'set status-style bg=red'
 ```
 
 ## See Also

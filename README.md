@@ -9,7 +9,10 @@ shared parts of that format.
 
 - **Writing a skill:** read [docs/skill-authoring.md](docs/skill-authoring.md),
   then copy [templates/skill/](templates/skill/) to `skills/<skill-name>/`.
+- **How each agent differs:** [docs/agent-support.md](docs/agent-support.md)
+  covers skill folders, supported fields, and listing budgets, with sources and
+  the date they were last checked.
 - **Installing a skill:** see
-  [Installing](docs/skill-authoring.md#9-installing) in the guide.
+  [Installing](docs/skill-authoring.md#10-installing) in the guide.
 - **Rules for agents working in this repo:** [AGENTS.md](AGENTS.md)
   (`CLAUDE.md` is a symlink to it).

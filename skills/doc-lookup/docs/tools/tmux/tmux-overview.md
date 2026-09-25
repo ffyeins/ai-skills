@@ -2,6 +2,8 @@
 
 > Conceptual overview, target specification, environment, and quick reference for tmux.
 
+Verified against: tmux 3.7b (2026-09)
+
 **Contents**
 
 - Key Concepts
@@ -191,8 +193,8 @@ C-b f                         Search for text in windows
 ### Panes
 
 ```
-C-b %                         Split vertically (left/right)
-C-b "                         Split horizontally (top/bottom)
+C-b %                         Split left/right (split-window -h)
+C-b "                         Split top/bottom (split-window -v)
 C-b o                         Next pane
 C-b ;                         Last (previous) pane
 C-b q                         Show pane numbers

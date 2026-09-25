@@ -1,0 +1,10 @@
+[
+  {"query": "whats the tmux option that renumbers my windows when i close one? i keep ending up with 1 3 4", "should_trigger": true},
+  {"query": "bash: in my backup script, what's the actual difference between [[ ]] and [ ] when the variable has spaces in it", "should_trigger": true},
+  {"query": "java 8 HashMap.computeIfAbsent - if my mapping function returns null, does anything get put in the map?", "should_trigger": true},
+  {"query": "neovim with kickstart: how do i make telescope find_files include hidden files like .env.example?", "should_trigger": true},
+  {"query": "neovim feels laggy when i hit esc inside tmux. what's escape-time set to by default, and what should i put in my tmux.conf?", "should_trigger": true},
+  {"query": "is my tmux server still running? list my sessions and attach me to the one called work", "should_trigger": false},
+  {"query": "refactor this python function so it returns a dataclass instead of a dict: def load_user(row): return {'id': row[0], 'name': row[1]}", "should_trigger": false},
+  {"query": "write a commit message for the staged changes in this repo", "should_trigger": false}
+]

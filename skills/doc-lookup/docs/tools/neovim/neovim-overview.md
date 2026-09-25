@@ -2,6 +2,8 @@
 
 > Core concepts, configuration layout, options, autocommands, and runtime directories for Neovim.
 
+Verified against: Neovim 0.12.3 and a kickstart.nvim-based config (2026-09)
+
 **Contents**
 
 - Modes
@@ -216,7 +218,7 @@ Run `:checkhealth` to diagnose issues with Neovim and installed plugins.
 ```vim
 :checkhealth              " Check everything
 :checkhealth telescope    " Check a specific plugin
-:checkhealth lspconfig    " Check LSP configuration
+:checkhealth vim.lsp      " Check LSP clients and configs
 ```
 
 Plugins can register health checks in `lua/<plugin>/health.lua` by implementing `check()`.

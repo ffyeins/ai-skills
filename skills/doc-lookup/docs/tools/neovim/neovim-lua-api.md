@@ -2,6 +2,8 @@
 
 > Core Lua interfaces for interacting with Neovim: vim.api, vim.fn, vim.cmd, options, variables, and utilities.
 
+Verified against: Neovim 0.12.3 (2026-09)
+
 **Contents**
 
 - Module System
@@ -105,8 +107,7 @@ local pos = vim.api.nvim_win_get_cursor(0)  -- {row, col}
 | `nvim_list_wins()` | List all window handles |
 | `nvim_command(cmd)` | Execute an Ex command |
 | `nvim_exec2(src, opts)` | Execute Vimscript, optionally capture output |
-| `nvim_echo(chunks, history, opts)` | Display a message |
-| `nvim_err_writeln(str)` | Write error message |
+| `nvim_echo(chunks, history, opts)` | Display a message; `opts = { err = true }` for an error (replaces the deprecated `nvim_err_writeln`) |
 | `nvim_feedkeys(keys, mode, escape_ks)` | Send keys as if typed |
 | `nvim_replace_termcodes(str, ...)` | Translate terminal codes like `<CR>` |
 
@@ -328,12 +329,12 @@ local table = vim.json.decode('{"key": "value"}')
 ### Type Checking
 
 ```lua
-vim.validate({
-  name = { name, 'string' },
-  age = { age, 'number' },
-  callback = { cb, 'function', true },  -- true = optional
-})
+vim.validate('name', name, 'string')
+vim.validate('age', age, 'number')
+vim.validate('callback', cb, 'function', true)  -- true = optional
 ```
+
+The older single-table form, `vim.validate({ name = { name, 'string' } })`, is deprecated.
 
 ## Logging and Debugging
 

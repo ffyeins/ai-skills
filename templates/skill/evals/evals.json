@@ -1,0 +1,23 @@
+{
+  "skill_name": "skill-name",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "TEMPLATE: a realistic task, typed the way a user would, with real file names and some context",
+      "expected_output": "TEMPLATE: what a good result looks like, specific enough to check",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "TEMPLATE: a second task that exercises a different part of the skill",
+      "expected_output": "TEMPLATE: what a good result looks like",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "TEMPLATE: an edge case: odd input, missing information, or the skill's exit path",
+      "expected_output": "TEMPLATE: what a good result looks like",
+      "files": []
+    }
+  ]
+}
